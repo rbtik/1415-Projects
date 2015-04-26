@@ -77,15 +77,19 @@ How It Works
 Natural Language Processing Techniques
 
 	Throughout the development of the project, we used a variety of NLP techniques including:
-	•	Sentence tokenization to identify each sentence within the corpus of movies in order to perform the sentence comparison 
+	•	Sentence tokenization to identify each sentence within the corpus of movies in order to perform 
+		the sentence comparison 
 	•	Word tokenization to perform the similarity calculation
-	•	Part of Speech identification with WordNet for each of the words within the sentence in order to filter and keep only nouns, adjectives, verbs, and adverbs
-		•	This removes unnecessary stop words while still keeping the critical words to help identify opinions
-	•	We experimented with both stemming and lemmatizing and found that using both techniques actually gave us the best result when trying to find the most important scores 
-		with PageRank.
-	•	Interestingly, when we applied stemming or lemmatizing or both to the dataset to compute for opinion, the results were very poor versus when not applying any of 
-		these techniques. This could be due to the fact that stemming or lemmatizing could have reduced the already fairly simplistic words to a point where it would be difficult 
-		for SentiWordNet to recognize them properly within their context.
+	•	Part of Speech identification with WordNet for each of the words within the sentence in order to 
+		filter and keep only nouns, adjectives, verbs, and adverbs
+		•	This removes unnecessary stop words while still keeping the critical words to help 
+			identify opinions
+	•	We experimented with both stemming and lemmatizing and found that using both techniques actually
+		gave us the best result when trying to find the most important scores with PageRank.
+	•	Interestingly, when we applied stemming or lemmatizing or both to the dataset to compute for 
+		opinion, the results were very poor versus when not applying any of these techniques. This could 
+		be due to the fact that stemming or lemmatizing could have reduced the already fairly simplistic 
+		words to a point where it would be difficult for SentiWordNet to recognize them properly within their context.
 	•	SentiWordNet was used to derive the senti_synset of each word in order to compute a positive, negative, and objectivity score.
 
 
