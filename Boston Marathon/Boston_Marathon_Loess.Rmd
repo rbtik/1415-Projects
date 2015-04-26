@@ -30,6 +30,7 @@ to_seconds <- function(t) {
   return(hour(time) * 3600 + minute(time) * 60 + second(time))
 }
 df$timeInSec <- to_seconds(df$Time)
+df$Year <- as.numeric(as.character(df$Year))
 ```
 
 Finally we plot the DataFrames and apply the Loess method.
@@ -38,6 +39,6 @@ Finally we plot the DataFrames and apply the Loess method.
 ggplot(df, aes(x=Year, y=timeInSec, group=gender, col=gender, fill=gender)) +
       geom_point() +
       geom_smooth(size=1, method="loess") + 
-      xlab("Years")
+      xlab("Years")  
 ```
 
