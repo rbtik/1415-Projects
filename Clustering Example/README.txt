@@ -1,4 +1,4 @@
-Please see the included ipython notebook: Final Individual Assignment - Regina Berengolts.ipynb for the code and results to the assigned problem.
+
 
 I went through multiple attempts and iterations for exploration using both Hierarchical Clustering and K-Means, but the code only shows the two attempts that I think are the most interesting to look at.
 
