@@ -1,0 +1,217 @@
+---
+Data Entry Performance on Clinical Trials
+author: "rbtik"
+---
+
+##Problem statement and hypothesis to be tested
+Timely data entry on the clinical database is crucial for the business of any pharmaceutical or medical device company in order to bring innovative products to the market. Clean data needs to be used to support stepwise reporting and approval of your new drug or medical device. Any delay on getting these, has huge business consequences such as losing your competitive advantage or not being able to provide this product to the general population (indicated with the condition which the drug or device cures). 
+
+Most investigational clinical trials have limited amount of patients and sites (i.e. hospitals) in which health authorities have approved them to conduct their trials so it’s important that these sites are engaged and provide timely and complete data entry to the sponsoring company. More importantly, all of them need to be entering accurate data at the same pace so the different study milestones for the study (e.g. procedure, 30 days after procedure…) are available short after these had been completed.
+
+Moreover, these clinical trials are most of the times international so they involve sites from different countries. Clinical practices vary across countries: for example while in Germany most sites will have in-hospital facilities for Echocardiography, in other countries as Spain, these might be off-hospital so the delay in producing the results can be delayed. 
+
+Finally, in-hospital resource allocation is crucial in order to facilitate data entry as this data can only be entered by the principal investigator (i.e. head unit physician) or the research nurse (i.e. most of the times, head nurse of the unit). These resources are many times over allocated participating in several studies from several sponsor companies so the availability of these can play an important role on the data entry performance for the investigational site.
+
+For this prediction of Number of Days (dependent variable) from other independent variables (i.e. Site, Form, User), our hypothesis will assume that there are differences across sites in terms of data entry performance. We will detail later which ones these might be.
+
+Consider the dataset available in the file "SiteDataEntry.csv". The file contains the following columns:
+
+**Variable        Description**
+
+_AuditID_	        NUMERIC: Unique ID of this audit entry.
+
+_StudyID_	        NUMERIC: Unique ID for the Study (for this case always 82 as we are polling data from a single study).
+
+_SiteId_	        NUMERIC: Unique ID for the Site.
+
+_SubjectId_	      NUMERIC: Unique ID for the Subject (patient).
+
+_SubjectName_	    STRING: Composite of Study, Site and Subject in text form.
+
+_FolderId_	      NUMERIC: Unique ID for the Visit.
+
+_FolderName_	    STRING: Name of the visit (i.e. Screening, Baseline, Discharge…).
+
+_FormId_	        NUMERIC: Unique ID for the Assessment.
+
+_FormName_	      STRING: Name of the assessment (i.e. Vital Signs, ECHO, CT Scan…).
+
+_FieldId_        NUMERIC: Unique ID for the datapoint.
+
+_FieldName_	      STRING: Coded name of the datapoint (i.e. systolic blood preassure, #Echo date, weight…).
+
+_Log#_	          NUMERIC: Sequence number for datapoints that appear more than once on a given assessment (form).
+
+_RecordID_	      NUMERIC: ID for the entry. 2 records in the Audit Trial table with the same Record ID refer to the same record (i.e. first entry, further modifications of the same record).
+
+_AuditAction_	    TEXT: Description of the action performed (e.g. ‘User entered '14 Jan 2013' reason for change: Data Entry Revision’).
+
+_UserID_	        NUMERIC: Unique ID of the user performing the action.
+
+_RoleId_	        NUMERIC: Unique ID of the user’s role (e.g. 25 for Research Coordinator).
+
+_RoleName_	      CATEGORICAL: Description of the role.
+
+_AuditActionType_	CATEGORICAL: Description of action type (e.g. Entered, EnteredWithChangeCode…).
+
+_AuditTime_	      DATETIME: When action was performed (format MM/DD/YYYY HH:mm).
+
+_Days_            NUMERIC: Calculation for number of days between when the assessment happened and the date site entered data (‘AuditTime’ - ‘AssessmentDate’).
+
+Reading the data from the file and store it into a dataframe
+
+```{r - read data}
+inp <- read.csv("SiteDataEntry.csv")
+str(inp)  # get some info about the structure of the dataset
+attach(inp)
+```
+
+## Data Exploration
+
+Lets explore some independent variables to assess dependency. First we look at _FormId_ (colored by _SiteId_)
+
+```{r - plot FormId}
+library(ggplot2)
+qplot(Days,FormId,data=inp,geom="jitter",colour=SiteId)
+```
+
+Above plot tell us that most of the higher Days are related to a SiteId so lets look deeper at a _FieldId_
+```{r - plot FieldId}
+qplot(Days,FieldId,data=inp,geom="jitter",colour=SiteId)
+```
+
+Again at a Field level some of the highest points belong from same _SiteId_ so we will try this variable first
+```{r - plot SiteId}
+qplot(Days,SiteId,data=inp,geom="jitter",colour=SiteId)
+```
+
+```{r histogram}
+qplot(Days,data=inp, geom="histogram", xlim=c(0,100), binwith=0.5, colour=I("red"))
+```
+
+From above we can see most of the entries resume in less than 25 days. Lets check correlations between variables (subset of numerical ones)
+```{r - correlations between variables}
+library(Hmisc)
+ninp <- data.frame(inp$SiteId, inp$SubjectId, inp$FormId, inp$FieldId, inp$AssDate, inp$UserID, inp$Days)
+rcorr(as.matrix(ninp))
+```
+
+
+## Model diagnostics
+
+Lets try some independent variables and decide our best predictors. We will categorise _SiteId_ as we have seen some sites predict better than others and have their own conditions.
+
+```{r - first model}
+inp$SiteId.f <- factor(inp$SiteId)
+fit1 <- lm(Days ~ SiteId.f, data=inp)
+summary(fit1)
+plot(inp$Days ~ inp$SiteId.f)
+abline(fit1)
+```
+
+The same happens for _FormId_. As we have seen in the correlations, going to the field level doesn't seem to add value out of the Form so we will use only Form.
+
+
+```{r - second model}
+inp$FormId.f <- factor(inp$FormId)
+fit2 <- lm(Days ~ FormId.f, data=inp)
+summary(fit2)
+plot(inp$Days ~ inp$FormId.f)
+abline(fit2)
+```
+
+```{r - third model}
+fit3 <- lm(Days ~ SubjectId, data=inp)
+summary(fit3)
+plot(inp$Days ~ inp$SubjectId)
+abline(fit3)
+```
+
+```{r - fourth model}
+fit4 <- lm(Days ~ UserID, data=inp)
+summary(fit4)
+plot(inp$Days ~ inp$UserID)
+abline(fit4)
+```
+
+```{r - model with interactions}
+fit5 <- lm(Days ~ SubjectId*UserID, data=inp)
+summary(fit5)
+```
+Trying with interactions shows that all variables are signficant but the Adjusted R-Squared is still lower than the previous models.
+
+## Model development
+
+From the previous steps, we will only consider 2 independent variables for our model: _SiteId_ and _FormId_
+
+
+```{r - final model}
+model <- lm(Days ~ inp$SiteId.f + inp$FormId.f, data=inp)
+summary(model)
+```
+
+## Model diagnostics
+
+To assess whether the linear model is reliable, we need to check for (1) 
+linearity, (2) nearly normal residuals, and (3) constant variability.
+
+*Linearity*: We will verify this condition with a plot 
+of the residuals vs. SiteID. 
+
+```{r residuals}
+plot(model$residuals ~ inp$SiteId.f + inp$FormId.f)
+abline(h = 0, lty = 3)  # adds a horizontal dashed line at y = 0
+```
+
+*Nearly normal residuals*: To check this condition, we can look at a histogram
+
+```{r -normality}
+#hist(model$residuals)
+qplot(resid(model),geom="blank") +
+geom_histogram( colour=I("white"), aes(y=..density..)) +
+  stat_function(fun=dnorm, aes(colour="Normal"),arg=list(mean=mean(resid(model)),
+                                                         sd=sd(resid(model))))
+```
+
+or a normal probability plot of the residuals.
+
+```{r - normality residuals}
+qqnorm(model$residuals)
+qqline(model$residuals)  # adds diagonal line to the normal prob plot
+```
+
+```{r - outlier test}
+library("car")
+inp$Daysfitted <- fitted(model)
+inp$Daysres <- residuals(model)
+outlierTest(model)
+influencePlot(model)
+write.csv(file="predictedSiteDataEntry.csv", x=inp)
+```
+Although there are a number of outliers, only one of them appears to be influential. In the future, if we were to dig deeper into this particular model, we may want to consider the one influential outlier as it has a significant impact on the model.
+
+Lets plot actuals vs predicted 
+```{r - actuals vs predited}
+qplot(inp$Days, inp$Daysfitted, geom="line")
+```
+
+### A3: Checking Homoscedasticity
+To check homoscedasticity (i.e., homogeneity of variance), we use a scatter plot of residuals vs predicted y:
+```{r homoscedasticity}
+qplot(predict(model),resid(model), geom="point")
+spreadLevelPlot(model) # we want the line to be horizontal
+```
+The line is not horizontal so our model does not pass this test either.
+
+### A4: Checking Independence
+Independence of errors. We use durbinWatsonTest and we want the statistic to be
+close to 2 and the p-value above alpha. We use the following test:
+
+* H0 : errors are not correlated
+* Ha : errors are dependent
+```{r independence}
+durbinWatsonTest(model)
+```
+Although the p-value is greater than 0 which indicates that we can not reject the null hypothesis or the errors are not correlated, the remaining tests do not have positive outcomes indicating that this is not the best model for the data.
+
+CONCLUSION: As we can see, our Adjusted R-Squared value is 0.08863 which seems incredibly low. However, a better understanding of the industry and the ideal values within the industry would help us understand the true value of this number. As such, there seems to be a lot of noise in the data which is not allowing us to fit well all predictions of data entry considering only Site and Form (kind of data entered). Most importantly, the model does not pass all the model diagnostic steps indicating that this is not a goo model for the data. The possibility exists that a linear model is not the appropriate model to fit with this kind of data.

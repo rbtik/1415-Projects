@@ -1,0 +1,43 @@
+---
+title: "Boston Marathon Loess Example"
+author: "rbtik"
+---
+In this assignment, we are tasked with scraping Boston Marathon run times from Wikipedia in order to plot the results.
+
+First step is to load the necessary libraries.
+
+```{r}
+library(XML)
+library(RCurl)
+library(lubridate)
+library(ggplot2)
+```
+
+In this next code we 1) parse the HTML into R Data Frames, 2) combine genders as they were originally separated into two data tables, 3) transform the time it took to run the marathon into seconds.
+
+```{r}
+URL <- 'http://en.wikipedia.org/wiki/List_of_winners_of_the_Boston_Marathon'
+tables <- readHTMLTable(URL)
+
+males <- tables[[5]]
+females <- tables[[6]]
+males$gender <- 'Male'
+females$gender <- 'Female'
+df <- rbind(males, females)
+
+to_seconds <- function(t) {
+  time <- hms(t)
+  return(hour(time) * 3600 + minute(time) * 60 + second(time))
+}
+df$timeInSec <- to_seconds(df$Time)
+```
+
+Finally we plot the DataFrames and apply the Loess method.
+
+```{r}
+ggplot(df, aes(x=Year, y=timeInSec, group=gender, col=gender, fill=gender)) +
+      geom_point() +
+      geom_smooth(size=1, method="loess") + 
+      xlab("Years")
+```
+
