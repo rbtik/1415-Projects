@@ -1,6 +1,8 @@
 ---
-Data Entry Performance on Clinical Trials
-author: "rbtik"
+title: Data Entry Performance on Clinical Trials
+author: rbtik
+date: "16/12/2014"
+output: html_document
 ---
 
 ##Problem statement and hypothesis to be tested
@@ -213,5 +215,6 @@ close to 2 and the p-value above alpha. We use the following test:
 durbinWatsonTest(model)
 ```
 Although the p-value is greater than 0 which indicates that we can not reject the null hypothesis or the errors are not correlated, the remaining tests do not have positive outcomes indicating that this is not the best model for the data.
+
 
 CONCLUSION: As we can see, our Adjusted R-Squared value is 0.08863 which seems incredibly low. However, a better understanding of the industry and the ideal values within the industry would help us understand the true value of this number. As such, there seems to be a lot of noise in the data which is not allowing us to fit well all predictions of data entry considering only Site and Form (kind of data entered). Most importantly, the model does not pass all the model diagnostic steps indicating that this is not a goo model for the data. The possibility exists that a linear model is not the appropriate model to fit with this kind of data.
